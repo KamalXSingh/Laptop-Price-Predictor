@@ -44,24 +44,35 @@ gpu = st.selectbox('GPU',df['GpuBrand'].unique())
 os = st.selectbox('OS',df['Os'].unique())
 
 if st.button('Predict Price'):
-    # query
-    ppi = None
-    if touchscreen == 'Yes':
-        touchscreen = 1
-    else:
-        touchscreen = 0
 
-    if ips == 'Yes':
-        ips = 1
-    else:
-        ips = 0
+    try:
+        # query
+        ppi = None
+        if touchscreen == 'Yes':
+            touchscreen = 1
+        else:
+            touchscreen = 0
 
-    X_res = int(resolution.split('x')[0])
-    Y_res = int(resolution.split('x')[1])
-    ppi = ((X_res**2) + (Y_res**2))**0.5/screen_size
-    query = np.array([company,Type,ram,weight,touchscreen,ips,ppi,cpu,hdd,ssd,gpu,os])
+        if ips == 'Yes':
+            ips = 1
+        else:
+            ips = 0
 
-    query = query.reshape(1,12)
-    st.title("The predicted price of this configuration is " + str(int(np.exp(pipe.predict(query)[0]))))
-else:
-    print("Avoid non-zero values")
+        X_res = int(resolution.split('x')[0])
+        Y_res = int(resolution.split('x')[1])
+
+        if screen_size <= 0:
+            raise ValueError("Screen size must be greater than zero.")
+
+        ppi = ((X_res**2) + (Y_res**2))**0.5/screen_size
+        query = np.array([company,Type,ram,weight,touchscreen,ips,ppi,cpu,hdd,ssd,gpu,os])
+
+        query = query.reshape(1,12)
+        st.title("The predicted price of this configuration is " + str(int(np.exp(pipe.predict(query)[0]))))
+
+    except ZeroDivisionError:
+        st.error("Screen size must be greater than zero to calculate PPI.")
+    except ValueError as ve:
+        st.error(str(ve))
+    except Exception as e:
+        st.error(f"An error occurred: {e}")
